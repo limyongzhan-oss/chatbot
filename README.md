@@ -65,9 +65,27 @@ Supabase is used only as the Postgres database. Login stays dTBM's own `users` t
 
 **1. Database (Supabase)**
 
-1. Create a project at supabase.com. Pick the **Singapore** region and set a strong database password.
-2. Click **Connect** and copy the **Transaction pooler** connection string (port 6543). Replace `[YOUR-PASSWORD]` in it.
-3. From your own computer, load the schema and demo data:
+1. Create a project at supabase.com. Pick the **Singapore** region and set a database password. Letters and digits only is easiest; if you use symbols, URL-encode them in the connection string.
+2. Open the project and click the **Connect** button at the top of the page. Under *Connection String* choose **Transaction pooler** (port 6543) and copy the string. Replace `[YOUR-PASSWORD]` in it with your database password.
+3. Load the schema and demo data from your own computer. You need **Git** and **Node 20+** installed, and no Postgres tools:
+
+   ```bash
+   git clone --branch claude/dtbm-manpower-tracking-oyetey https://github.com/limyongzhan-oss/chatbot.git dtbm
+   cd dtbm
+   npm install
+   ```
+
+   Then set the variables and run the loader. In **PowerShell** (Windows; use single quotes):
+
+   ```powershell
+   $env:DATABASE_URL = 'postgresql://postgres.xxxx:PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres'
+   $env:DATABASE_SSL = 'true'
+   $env:ALLOW_RESET = '1'
+   $env:DEMO_PASSWORD = 'pick-a-password-for-the-demo-logins'
+   npm run db:deploy
+   ```
+
+   On **macOS/Linux**, use `export` instead:
 
    ```bash
    export DATABASE_URL='postgresql://postgres.xxxx:PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres'
@@ -75,7 +93,9 @@ Supabase is used only as the Postgres database. Login stays dTBM's own `users` t
    npm run db:deploy
    ```
 
-   `ALLOW_RESET=1` is required because the script **deletes and recreates all dTBM data**. It refuses any non-local database without it. Never run it again after real data exists.
+   (CMD works too, but with `set NAME=value` and no quotes. PowerShell is simpler.) The variables only last for that terminal window.
+
+   `ALLOW_RESET=1` is required because the script **deletes and recreates all dTBM data**. It refuses any non-local database without it. Never run it again after real data exists. If it times out on the transaction pooler, use the **Session pooler** string instead (same Connect panel, port 5432).
 
 **2. App (Vercel)**
 

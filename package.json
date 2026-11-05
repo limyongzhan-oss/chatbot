@@ -7,9 +7,9 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "db:reset": "bash scripts/db-reset.sh",
+    "db:reset": "node scripts/db-reset.js",
     "test:rls": "psql \"$DATABASE_URL\" -q -v ON_ERROR_STOP=1 -f db/test_rls.sql",
-    "db:deploy": "bash scripts/db-reset.sh"
+    "db:deploy": "node scripts/db-reset.js"
   },
   "dependencies": {
     "jose": "^6.1.0",
