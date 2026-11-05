@@ -13,6 +13,7 @@ const ERRORS: Record<string, string> = {
 type State = {
   name: string; subcontractor: string; consent_at: Date | null;
   checkin_type: string | null; checked_in: string | null; checked_out: string | null; status: string | null;
+  alerted: boolean;
 };
 
 export default async function CheckinPage({ params, searchParams }: {
@@ -32,6 +33,7 @@ export default async function CheckinPage({ params, searchParams }: {
   const state = claim && await asService(async (c) =>
     (await c.query<State>(
       `select w.name, s.name as subcontractor, w.consent_at, a.checkin_type, h.status,
+              exists (select 1 from alerts al where al.health_report_id = h.id) as alerted,
               to_char(a.checked_in_at at time zone 'Asia/Singapore', 'HH24:MI') as checked_in,
               to_char(a.checked_out_at at time zone 'Asia/Singapore', 'HH24:MI') as checked_out
        from workers w
@@ -66,7 +68,9 @@ export default async function CheckinPage({ params, searchParams }: {
                   <div className="icon">🦺</div>
                   <h2>Checked in at {state.checked_in}</h2>
                   <p className="muted">{state.checkin_type === "mid" ? "Mid-day" : "Start of day"} check-in
-                    {state.status === "unwell" && " · reported unwell — please tell your supervisor"}</p>
+                    {state.status === "unwell" && (state.alerted
+                      ? " · reported unwell — your safety officer has been notified"
+                      : " · reported unwell — please tell your supervisor")}</p>
                 </div>
                 <form action={checkOut}>
                   <input type="hidden" name="token" value={token} />

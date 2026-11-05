@@ -28,6 +28,7 @@ const assert = (ok, msg) => { if (!ok) throw new Error("FAIL: " + msg); console.
   await w.click("text=Check in");
   await w.waitForSelector("text=Checked in at");
   assert(await w.isVisible("text=Mid-day check-in"), "worker checked in as mid, unwell");
+  assert(await w.isVisible("text=safety officer has been notified"), "worker told safety officer was notified");
   await w.screenshot({ path: `${out}/2-worker-checked-in.png`, fullPage: true });
 
   // 2. Contractor JL111 sees the worker as unwell and still on site.
@@ -43,6 +44,25 @@ const assert = (ok, msg) => { if (!ok) throw new Error("FAIL: " + msg); console.
   const exitCard = p.locator("section.card", { hasText: "Not yet exited" });
   assert((await exitCard.getByText("…" + last4).count()) === 1, "worker in not-yet-exited list");
   await p.screenshot({ path: `${out}/3-contractor-site.png`, fullPage: true });
+
+  // 2b. Alerts in demo mode (no API keys): logged for JL111's 3 seeded recipients.
+  assert(await unwellCard.locator("tr", { hasText: "Demo: dizzy" }).locator("text=Demo 3").isVisible(), "alert badge shows Demo 3");
+  await p.goto(`${BASE}/site/settings`);
+  assert((await p.locator("text=Demo mode").count()) >= 3, "settings shows channels in demo mode");
+  await p.fill("input[name=name]", "E2E officer");
+  await p.fill("input[name=address]", "e2e.officer@example.com");
+  await p.click("button:has-text('Add recipient')");
+  await p.waitForSelector("text=Recipient added.");
+  await p.locator("tr", { hasText: "e2e.officer@example.com" }).locator("button:has-text('Send test')").click();
+  await p.waitForSelector("text=test alert recorded in the log");
+  assert(await p.locator("section.card", { hasText: "Alert log" }).locator("tr", { hasText: "e2e.officer@example.com" }).first().isVisible(), "test alert appears in alert log");
+  await p.fill("input[name=name]", "Bad");
+  await p.fill("input[name=address]", "not-an-email");
+  await p.click("button:has-text('Add recipient')");
+  await p.waitForSelector("text=Check the details");
+  console.log("ok: invalid address rejected");
+  await p.screenshot({ path: `${out}/8-alert-settings.png`, fullPage: true });
+  await p.goto(`${BASE}/site`);
 
   // 3. Contractor cannot reach authority pages or other sites.
   await p.goto(`${BASE}/authority/c/CR111`);

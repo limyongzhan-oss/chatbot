@@ -85,3 +85,27 @@ insert into users (email, password_hash, role, contract_id)
 select 'authority@dtbm.demo', crypt('demo1234', gen_salt('bf', 8)), 'authority', null
 union all
 select lower(code) || '@dtbm.demo', crypt('demo1234', gen_salt('bf', 8)), 'contractor', id from contracts;
+
+-- Alert recipients for JL111 (fictional addresses; channels run in demo mode without API keys).
+insert into alert_recipients (contract_id, name, channel, address)
+select c.id, r.name, r.channel, r.address
+from contracts c,
+     (values ('Safety Officer — Tan', 'email', 'safety.jl111@example.com'),
+             ('Safety Officer — Tan', 'telegram', '100000001'),
+             ('Site Manager — Lim',   'whatsapp', '+6590000001')) r(name, channel, address)
+where c.code = 'JL111';
+
+-- Past alerts for JL111's unwell reports, as if sent in demo mode.
+insert into alerts (contract_id, health_report_id, recipient_id, channel, address, body, status, attempts, created_at, sent_at)
+select h.contract_id, h.id, r.id, r.channel, r.address,
+       format('dTBM %s: %s (…%s, %s) reported unwell at %s. Details: http://localhost:3000/site',
+              c.code, w.name, w.id_last4, s.name,
+              to_char(h.reported_at at time zone 'Asia/Singapore', 'HH24:MI DD Mon')),
+       'logged', 1, h.reported_at, h.reported_at
+from health_reports h
+join attendance a      on a.id = h.attendance_id
+join workers w         on w.id = a.worker_id
+join subcontractors s  on s.id = a.subcontractor_id
+join contracts c       on c.id = h.contract_id
+join alert_recipients r on r.contract_id = h.contract_id and r.active
+where h.status = 'unwell' and c.code = 'JL111';

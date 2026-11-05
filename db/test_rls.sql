@@ -24,6 +24,27 @@ select pg_temp.check((select count(distinct contract_id) from attendance) = 1, '
 select pg_temp.check((select count(distinct contract_id) from health_reports) = 1, 'jl111 health isolated');
 select pg_temp.check((select count(distinct contract_code) from daily_subcon_summary) = 1, 'summary view respects RLS');
 select pg_temp.check((select count(*) from audit_log) = 0, 'contractor cannot read audit log');
+select pg_temp.check((select count(distinct contract_id) from alert_recipients) = 1, 'jl111 recipients isolated');
+select pg_temp.check(not exists (select 1 from alerts where contract_id <> app_contract_id()), 'jl111 alerts isolated');
+rollback;
+
+-- Contractor manages its own recipients but cannot add one to another site, or write alerts.
+begin;
+select pg_temp.as_user('jl111@dtbm.demo');
+insert into alert_recipients (contract_id, name, channel, address)
+  values (app_contract_id(), 'New officer', 'email', 'new@example.com');
+select pg_temp.check((select count(*) from alert_recipients where address = 'new@example.com') = 1, 'jl111 can add own recipient');
+do $$ begin
+  insert into dtbm.alert_recipients (contract_id, name, channel, address)
+    values ((select id from dtbm.contracts where code = 'JL112'), 'Intruder', 'email', 'x@example.com');
+  raise exception 'FAIL: jl111 added recipient to another site';
+exception when insufficient_privilege then raise notice 'ok: cannot add recipient to other site';
+end $$;
+do $$ begin
+  insert into dtbm.alerts (contract_id, channel, address, body) values (dtbm.app_contract_id(), 'email', 'x', 'x');
+  raise exception 'FAIL: contractor wrote to alerts outbox';
+exception when insufficient_privilege then raise notice 'ok: alerts outbox is server-only';
+end $$;
 rollback;
 
 -- Contractor JL111 cannot update CR111 health rows.

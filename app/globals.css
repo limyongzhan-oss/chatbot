@@ -131,3 +131,9 @@ label.field input, label.field textarea { display: block; width: 100%; margin-to
   body { background: #fff; }
   .card { border: 0; }
 }
+
+/* ---------- settings */
+.note { background: #e6f4ed; color: var(--good); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; font-size: 14px; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+select { font: inherit; }

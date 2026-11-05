@@ -1,4 +1,4 @@
-import type { PersonRow, SubconRow, Totals, TrendPoint } from "@/lib/queries";
+import type { AlertCounts, PersonRow, SubconRow, Totals, TrendPoint } from "@/lib/queries";
 import { Bar, Kpi, pct } from "./ui";
 import { TrendChart } from "./TrendChart";
 
@@ -9,6 +9,14 @@ export type SiteData = {
   notExited: PersonRow[];
   trend: TrendPoint[];
 };
+
+export function AlertBadge({ a }: { a: AlertCounts }) {
+  if (a.alerts_failed) return <span className="pill bad" title="Delivery failed — see alert log">Failed {a.alerts_failed}</span>;
+  if (a.alerts_pending) return <span className="pill">Sending…</span>;
+  if (a.alerts_sent) return <span className="pill good" title="Delivered to recipients">✓ Sent {a.alerts_sent}</span>;
+  if (a.alerts_logged) return <span className="pill" title="Demo mode: message recorded, not sent">Demo {a.alerts_logged}</span>;
+  return <span className="pill warn" title="No active alert recipients">None</span>;
+}
 
 /** One site's day: shared by the contractor page and the authority drill-down. */
 export function SiteView({ data, isToday, followUp }: {
@@ -79,7 +87,7 @@ export function SiteView({ data, isToday, followUp }: {
           {unwell.length === 0 ? <p className="empty">Nobody reported unwell.</p> : (
             <div className="tablewrap list">
               <table>
-                <thead><tr><th>Worker</th><th>Subcontractor</th><th>In</th><th>Remarks</th><th>Follow-up</th></tr></thead>
+                <thead><tr><th>Worker</th><th>Subcontractor</th><th>In</th><th>Remarks</th><th>Alert</th><th>Follow-up</th></tr></thead>
                 <tbody>
                   {unwell.map((u) => (
                     <tr key={u.attendance_id}>
@@ -87,6 +95,7 @@ export function SiteView({ data, isToday, followUp }: {
                       <td>{u.subcontractor}</td>
                       <td className="tnum">{u.checked_in}</td>
                       <td>{u.remarks ?? <span className="muted">–</span>}</td>
+                      <td><AlertBadge a={u} /></td>
                       <td>
                         {followUp ? (
                           <form action={followUp}>

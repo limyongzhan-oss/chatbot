@@ -93,6 +93,39 @@ create table users (
   check ((role = 'contractor') = (contract_id is not null))
 );
 
+-- Who gets told when a worker reports unwell. Managed by the site's contractor.
+create table alert_recipients (
+  id          serial primary key,
+  contract_id int  not null references contracts(id),
+  name        text not null,
+  channel     text not null check (channel in ('email', 'telegram', 'whatsapp')),
+  address     text,          -- email / Telegram chat_id / WhatsApp E.164 number; null while Telegram link pending
+  active      boolean not null default true,
+  link_code   text unique,   -- Telegram deep-link code until linked
+  created_at  timestamptz not null default now()
+);
+create index on alert_recipients (contract_id);
+
+-- Outbox: one row per (report, recipient). Written by the server only.
+create table alerts (
+  id               bigserial primary key,
+  contract_id      int    not null references contracts(id),
+  health_report_id bigint references health_reports(id) on delete cascade,  -- null for test alerts
+  recipient_id     int    references alert_recipients(id) on delete set null,
+  channel          text   not null,
+  address          text   not null,
+  body             text   not null,
+  status           text   not null default 'pending'
+                   check (status in ('pending', 'sending', 'sent', 'failed', 'logged')),
+  attempts         int    not null default 0,
+  error            text,
+  created_at       timestamptz not null default now(),
+  sent_at          timestamptz
+);
+create index on alerts (contract_id, created_at desc);
+create index on alerts (health_report_id);
+create index on alerts (status) where status in ('pending', 'failed', 'sending');
+
 create table audit_log (
   id          bigserial primary key,
   user_id     uuid not null,
@@ -123,6 +156,8 @@ alter table workers        enable row level security;
 alter table attendance     enable row level security;
 alter table health_reports enable row level security;
 alter table audit_log      enable row level security;
+alter table alert_recipients enable row level security;
+alter table alerts           enable row level security;
 -- users: no grant to dtbm_app at all (login runs as owner).
 
 grant select on groups, contracts, subcontractors, workers, attendance, health_reports to dtbm_app;
@@ -152,6 +187,20 @@ create policy health_read on health_reports for select to dtbm_app using (
 -- Only the site's own contractor marks follow-up.
 create policy health_followup on health_reports for update to dtbm_app
   using (contract_id = app_contract_id()) with check (contract_id = app_contract_id());
+grant select, insert, update, delete on alert_recipients to dtbm_app;
+grant usage on sequence alert_recipients_id_seq to dtbm_app;
+grant select on alerts to dtbm_app;
+
+-- Contractor manages its own site's recipients; authority can read all.
+create policy recipients_read on alert_recipients for select to dtbm_app using (
+  app_role() = 'authority' or contract_id = app_contract_id()
+);
+create policy recipients_write on alert_recipients for all to dtbm_app
+  using (contract_id = app_contract_id()) with check (contract_id = app_contract_id());
+create policy alerts_read on alerts for select to dtbm_app using (
+  app_role() = 'authority' or contract_id = app_contract_id()
+);
+
 create policy audit_insert on audit_log for insert to dtbm_app with check (user_id = app_user_id());
 create policy audit_read on audit_log for select to dtbm_app using (app_role() = 'authority');
 

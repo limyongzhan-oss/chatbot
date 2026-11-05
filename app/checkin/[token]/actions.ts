@@ -2,6 +2,8 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
+import { dispatch, queueUnwellAlerts } from "@/lib/alerts/outbox";
 import { asService } from "@/lib/db";
 import { sign, verify } from "@/lib/session";
 
@@ -61,6 +63,7 @@ export async function checkIn(formData: FormData) {
   const consent = formData.get("consent") === "on";
   if ((type !== "start" && type !== "mid") || (health !== "well" && health !== "unwell")) back(token, "missing");
 
+  let alertIds: number[] = [];
   const err = await asService(async (c) => {
     const w = (await c.query<{ subcontractor_id: number; consent_at: Date | null }>(
       "select subcontractor_id, consent_at from workers where id = $1 and contract_id = $2", [claim.wid, claim.cid],
@@ -76,13 +79,17 @@ export async function checkIn(formData: FormData) {
       [claim.cid, w.subcontractor_id, claim.wid, type],
     );
     if (!a.rows[0]) return null; // already checked in today: page shows current state
-    await c.query(
-      "insert into health_reports (attendance_id, contract_id, status, remarks) values ($1, $2, $3, $4)",
+    const h = await c.query<{ id: number }>(
+      `insert into health_reports (attendance_id, contract_id, status, remarks)
+       values ($1, $2, $3, $4) returning id`,
       [a.rows[0].id, claim.cid, health, health === "unwell" ? remarks : null],
     );
-    // Phase 6: notify the site's safety officer when health = 'unwell'.
+    // Alerts are queued in the same transaction as the report, so neither exists without the other.
+    if (health === "unwell") alertIds = await queueUnwellAlerts(c, h.rows[0].id);
     return null;
   });
+  // Send after the response: the worker never waits on Telegram/email.
+  if (alertIds.length) after(() => dispatch(alertIds).then(() => undefined));
   back(token, err ?? undefined);
 }
 

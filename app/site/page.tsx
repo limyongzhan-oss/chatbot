@@ -40,6 +40,7 @@ export default async function SitePage({ searchParams }: { searchParams: Promise
             <h1>{contract.code} — {contract.name}</h1>
             <div className="muted small">{prettyDate(date)} · {contract.site_address}</div>
           </div>
+          <Link className="btn ghost noprint" href="/site/settings">Alert settings</Link>
           <Link className="btn ghost noprint" href="/site/qr">Site check-in QR</Link>
           <DatePicker date={date} />
         </div>
