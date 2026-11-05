@@ -1,5 +1,5 @@
 -- Row-level security tests. Run: npm run test:rls  (fails loudly on any violation)
-set search_path = dtbm, public;
+set search_path = dtbm, extensions, public;
 \set ON_ERROR_STOP 1
 
 create or replace function pg_temp.as_user(p_email text) returns void language plpgsql as $$

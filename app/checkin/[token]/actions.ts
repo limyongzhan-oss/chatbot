@@ -27,15 +27,33 @@ export async function identify(formData: FormData) {
   const pin = String(formData.get("pin") ?? "").trim();
   if (!/^[0-9]{3}[A-Z]$/.test(last4) || !/^[0-9]{4}$/.test(pin)) back(token, "format");
 
-  const worker = await asService(async (c) => {
+  // Lockout: 5 wrong PINs per worker per 15 minutes. The checkin URL is public, so without
+  // this anyone could try all 10,000 PINs for a known last-4.
+  const result = await asService(async (c) => {
+    const contract = (await c.query<{ id: number }>("select id from contracts where checkin_token = $1", [token])).rows[0];
+    if (!contract) return { kind: "nomatch" as const };
+    const recent = (await c.query<{ n: number }>(
+      `select count(*)::int as n from checkin_attempts
+       where contract_id = $1 and id_last4 = $2 and at > now() - interval '15 minutes'`,
+      [contract.id, last4],
+    )).rows[0].n;
+    if (recent >= 5) return { kind: "locked" as const };
     const { rows } = await c.query<{ id: number; contract_id: number }>(
-      `select w.id, w.contract_id from workers w join contracts c on c.id = w.contract_id
-       where c.checkin_token = $1 and w.id_last4 = $2 and w.active and w.pin_hash = crypt($3, w.pin_hash)`,
-      [token, last4, pin],
+      `select id, contract_id from workers
+       where contract_id = $1 and id_last4 = $2 and active and pin_hash = crypt($3, pin_hash)`,
+      [contract.id, last4, pin],
     );
-    return rows[0];
+    if (!rows[0]) {
+      await c.query("insert into checkin_attempts (contract_id, id_last4) values ($1, $2)", [contract.id, last4]);
+      await c.query("delete from checkin_attempts where at < now() - interval '1 day'");
+      return { kind: "nomatch" as const };
+    }
+    await c.query("delete from checkin_attempts where contract_id = $1 and id_last4 = $2", [contract.id, last4]);
+    return { kind: "ok" as const, worker: rows[0] };
   });
-  if (!worker) back(token, "nomatch");
+  if (result.kind === "locked") back(token, "locked");
+  if (result.kind !== "ok") back(token, "nomatch");
+  const worker = (result as Extract<typeof result, { kind: "ok" }>).worker;
 
   const jar = await cookies();
   const opts = { httpOnly: true, sameSite: "lax" as const, secure: process.env.NODE_ENV === "production", path: path(token) };

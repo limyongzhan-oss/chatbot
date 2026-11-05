@@ -7,8 +7,9 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "db:reset": "psql \"$DATABASE_URL\" -q -v ON_ERROR_STOP=1 -f db/schema.sql -f db/seed.sql",
-    "test:rls": "psql \"$DATABASE_URL\" -q -v ON_ERROR_STOP=1 -f db/test_rls.sql"
+    "db:reset": "bash scripts/db-reset.sh",
+    "test:rls": "psql \"$DATABASE_URL\" -q -v ON_ERROR_STOP=1 -f db/test_rls.sql",
+    "db:deploy": "bash scripts/db-reset.sh"
   },
   "dependencies": {
     "jose": "^6.1.0",

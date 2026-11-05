@@ -1,6 +1,7 @@
 -- Demo seed: 2 groups, 6 contracts, subcontractors, ~1,500 workers, 30 days of attendance.
--- All names are fictional. Every worker PIN is 1234; every user password is demo1234.
-set search_path = dtbm, public;
+-- All names are fictional. Every worker PIN is 1234; user password is :demo_password (default demo1234,
+-- set DEMO_PASSWORD when seeding a hosted database).
+set search_path = dtbm, extensions, public;
 select setseed(0.42);
 
 insert into groups (code, name) values
@@ -80,11 +81,11 @@ select a.id, a.contract_id,
        a.checked_in_at
 from (select a.*, random() as r from attendance a) a;
 
--- Users (password demo1234).
+-- Users (password from psql variable demo_password).
 insert into users (email, password_hash, role, contract_id)
-select 'authority@dtbm.demo', crypt('demo1234', gen_salt('bf', 8)), 'authority', null
+select 'authority@dtbm.demo', crypt(:'demo_password', gen_salt('bf', 8)), 'authority', null
 union all
-select lower(code) || '@dtbm.demo', crypt('demo1234', gen_salt('bf', 8)), 'contractor', id from contracts;
+select lower(code) || '@dtbm.demo', crypt(:'demo_password', gen_salt('bf', 8)), 'contractor', id from contracts;
 
 -- Alert recipients for JL111 (fictional addresses; channels run in demo mode without API keys).
 insert into alert_recipients (contract_id, name, channel, address)

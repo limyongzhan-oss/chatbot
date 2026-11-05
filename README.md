@@ -41,7 +41,7 @@ Needs Node 20+ and Postgres 14+ (the `pgcrypto` extension must be available).
 cp .env.example .env.local          # set DATABASE_URL and SESSION_SECRET
 export $(cat .env.local | xargs)
 npm install
-npm run db:reset                    # schema + demo seed (about 2,200 workers, 30 days of history)
+npm run db:reset                    # schema + demo seed (about 2,200 workers, 30 days of history). Local databases only
 npm run test:rls                    # row-level security tests
 npm run build && npm start          # http://localhost:3000
 ```
@@ -58,6 +58,49 @@ npm run build && npm start          # http://localhost:3000
 - Every seeded worker's PIN is `1234`.
 - Try worker `042O` at JL111.
 - Contractors can also open their site's QR page from the dashboard.
+
+## Deploy a shareable link (Vercel + Supabase)
+
+Supabase is used only as the Postgres database. Login stays dTBM's own `users` table.
+
+**1. Database (Supabase)**
+
+1. Create a project at supabase.com. Pick the **Singapore** region and set a strong database password.
+2. Click **Connect** and copy the **Transaction pooler** connection string (port 6543). Replace `[YOUR-PASSWORD]` in it.
+3. From your own computer, load the schema and demo data:
+
+   ```bash
+   export DATABASE_URL='postgresql://postgres.xxxx:PASSWORD@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres'
+   export DATABASE_SSL=true ALLOW_RESET=1 DEMO_PASSWORD='pick-a-password-for-the-demo-logins'
+   npm run db:deploy
+   ```
+
+   `ALLOW_RESET=1` is required because the script **deletes and recreates all dTBM data**. It refuses any non-local database without it. Never run it again after real data exists.
+
+**2. App (Vercel)**
+
+1. At vercel.com choose **Add New → Project** and import this GitHub repo (the `main` branch once PR #1 is merged).
+2. Add these environment variables:
+
+   | Variable | Value |
+   |---|---|
+   | `DATABASE_URL` | the pooler string from step 1 |
+   | `DATABASE_SSL` | `true` |
+   | `SESSION_SECRET` | 32+ random characters, e.g. from `openssl rand -hex 32`. The app refuses to log anyone in without it. |
+   | `APP_URL` | `https://<your-project>.vercel.app` (used in alert links) |
+   | `HIDE_DEMO_HINT` | `1` |
+   | `CRON_SECRET` | any random string (protects the alert retry endpoint) |
+
+   Add the Telegram/Resend/WhatsApp keys from *Alerts setup* below if you want live alerts.
+3. Click **Deploy**. Vercel gives you the link. `vercel.json` already places functions in Singapore.
+4. Open the link, log in as `authority@dtbm.demo` with the `DEMO_PASSWORD` you chose, and print the QR from a contractor dashboard (`jl111@dtbm.demo`).
+
+**Limits to know about**
+
+- Vercel's free **Hobby** plan runs cron only once a day and is for non-commercial use. For alert retries every few minutes, add a free pinger such as cron-job.org calling `POST <your-url>/api/alerts/dispatch` with the header `Authorization: Bearer <CRON_SECRET>`.
+- Supabase free projects **pause after a week with no activity**. Fine for a demo, not for a pilot.
+- Keep this hosted copy on the fictional demo data. Real NRIC/FIN last-4 and health data need a PDPA decision from the authority first.
+- Workers get 5 PIN attempts per 15 minutes; after that they are locked out until the window passes.
 
 ## Alerts setup
 

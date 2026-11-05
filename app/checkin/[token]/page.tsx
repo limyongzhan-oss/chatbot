@@ -8,6 +8,7 @@ const ERRORS: Record<string, string> = {
   expired: "Your session timed out. Please enter your details again.",
   missing: "Please choose Start or Mid, and whether you are feeling well.",
   consent: "Please tick the consent box to continue.",
+  locked: "Too many wrong PINs. Try again in 15 minutes, or ask your supervisor to reset your PIN.",
 };
 
 type State = {

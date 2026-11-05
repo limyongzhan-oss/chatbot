@@ -3,9 +3,16 @@ import { Pool, type PoolClient } from "pg";
 
 const globalForPool = globalThis as unknown as { __dtbmPool?: Pool };
 
+// Hosted Postgres (Supabase pooler) needs TLS. Its pooler certificate chain is not in Node's
+// trust store, so DATABASE_SSL=true encrypts without verifying the certificate.
+// Serverless: every function instance has its own pool, so keep it small in production.
 export const pool =
   globalForPool.__dtbmPool ??
-  new Pool({ connectionString: process.env.DATABASE_URL, max: 10 });
+  new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_SSL === "true" ? { rejectUnauthorized: false } : undefined,
+    max: process.env.NODE_ENV === "production" ? 3 : 10,
+  });
 if (process.env.NODE_ENV !== "production") globalForPool.__dtbmPool = pool;
 
 export type Db = PoolClient;
@@ -14,7 +21,7 @@ async function tx<T>(setup: (c: Db) => Promise<void>, fn: (c: Db) => Promise<T>)
   const c = await pool.connect();
   try {
     await c.query("begin");
-    await c.query("set local search_path = dtbm, public");
+    await c.query("set local search_path = dtbm, extensions, public");
     await setup(c);
     const result = await fn(c);
     await c.query("commit");

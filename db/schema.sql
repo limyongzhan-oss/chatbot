@@ -1,11 +1,15 @@
--- dTBM schema. Idempotent: drops and recreates the app schema.
+-- dTBM schema. DESTRUCTIVE: drops and recreates the dtbm schema. Never run it against a
+-- database holding data you want to keep (scripts/db-reset.sh refuses non-local hosts
+-- unless ALLOW_RESET=1).
 -- Isolation model: the app connects as the schema owner, but every request made
 -- on behalf of a logged-in user runs inside a transaction that does
 --   SET LOCAL ROLE dtbm_app;  set_config('app.user_id', <uuid>, true)
 -- so the row-level security policies below decide what that user can see.
 -- (On Supabase, app_user_id() becomes auth.uid() and dtbm_app becomes "authenticated".)
 
-create extension if not exists pgcrypto;
+-- Supabase keeps extensions in the `extensions` schema; locally the schema is created here.
+create schema if not exists extensions;
+create extension if not exists pgcrypto with schema extensions;
 
 do $$ begin
   create role dtbm_app nologin;
@@ -15,7 +19,7 @@ grant dtbm_app to current_user;
 drop schema if exists dtbm cascade;
 create schema dtbm;
 grant usage on schema dtbm to dtbm_app;
-set search_path = dtbm, public;
+set search_path = dtbm, extensions, public;
 
 -- ---------------------------------------------------------------- tables
 create table groups (
@@ -125,6 +129,15 @@ create table alerts (
 create index on alerts (contract_id, created_at desc);
 create index on alerts (health_report_id);
 create index on alerts (status) where status in ('pending', 'failed', 'sending');
+
+-- Failed worker check-in attempts, for the PIN lockout. Server-only (no grant to dtbm_app).
+create table checkin_attempts (
+  id          bigserial primary key,
+  contract_id int  not null references contracts(id),
+  id_last4    text not null,
+  at          timestamptz not null default now()
+);
+create index on checkin_attempts (contract_id, id_last4, at);
 
 create table audit_log (
   id          bigserial primary key,

@@ -123,7 +123,7 @@ async function waitFor(fn, label, ms = 8000) {
   await p.waitForSelector("text=Test alert sent.");
   const t = (await stub("/__requests"))[0];
   assert(t && t.body.chat_id === "777000111" && t.body.text.includes("test alert"), "test alert reached Telegram stub");
-  await p.screenshot({ path: process.argv[2] ? `${process.argv[2]}/settings-live.png` : "/dev/null", fullPage: true });
+  if (process.argv[2]) await p.screenshot({ path: `${process.argv[2]}/settings-live.png`, fullPage: true });
 
   await browser.close();
   await db.end();

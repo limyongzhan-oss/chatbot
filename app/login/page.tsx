@@ -20,13 +20,13 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
         <label className="field">Password<input name="password" type="password" required autoComplete="current-password" /></label>
         <button className="btn big" type="submit">Log in</button>
       </form>
-      <div className="card small" style={{ marginTop: 16 }}>
+      {process.env.HIDE_DEMO_HINT !== "1" && <div className="card small" style={{ marginTop: 16 }}>
         <b>Demo accounts</b> (password <code>demo1234</code>)
         <ul style={{ paddingLeft: 18, margin: "8px 0 0" }}>
           {DEMO.map(([email, label]) => <li key={email}><code>{email}</code> — {label}</li>)}
         </ul>
         <p className="muted" style={{ marginBottom: 0 }}>Any contract works: jl111–jl113, cr111–cr113.</p>
-      </div>
+      </div>}
     </main>
   );
 }
