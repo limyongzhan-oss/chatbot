@@ -20,6 +20,20 @@ Daily headcount and worker wellness for construction sites. The data is organise
 This is the **thin-slice demo**. Not in it yet: roster management, the contractor API, and CSV export.
 See [`docs/dtbm-plan.md`](docs/dtbm-plan.md) for the full plan.
 
+## Quick demo: no install
+
+Want to show dTBM without setting anything up? Open [`demo/dtbm-demo.html`](demo/dtbm-demo.html) by double-clicking it
+(Chrome or Edge recommended). It is one file: no server, no database, no internet.
+
+- Pick **Authority**, a **Contractor** site, or the **Worker phone** view.
+- Open the worker view in a second tab and check a worker in as unwell. The contractor dashboard in the other tab updates
+  by itself, and a simulated email, Telegram and WhatsApp alert appears.
+- Use **Reset demo data** in the top bar to start again.
+
+**It is a click-through demo, not the product.** The data is fictional and kept in your browser only, so a check-in on one
+device does not show up on another. The logins and the separation between sites are pretend, not security. The real
+app below keeps contractors apart in the database itself. Browser test: `node tests/demo.js`.
+
 ## How data isolation works
 
 There is one Postgres database. Isolation comes from **row-level security**, not from application code:

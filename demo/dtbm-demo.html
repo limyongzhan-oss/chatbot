@@ -1,0 +1,559 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>dTBM demo</title>
+<style>
+:root{--bg:#f4f5f7;--surface:#fff;--ink:#16202c;--muted:#5d6b7a;--line:#e2e6eb;--brand:#1d3a5f;--accent:#f08a24;--good:#1f8a5b;--bad:#c8372d;--bad-bg:#fdeceb;--warn-bg:#fff4e5;--bar:#2f6fb3;--radius:10px;color-scheme:light}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--bar);text-decoration:none;cursor:pointer}a:hover{text-decoration:underline}
+h1,h2,h3{margin:0;line-height:1.2}h1{font-size:22px}h2{font-size:16px}
+.muted{color:var(--muted)}.small{font-size:13px}.tnum{font-variant-numeric:tabular-nums}
+.demo-banner{background:var(--warn-bg);color:#7a4300;font-size:13px;padding:6px 12px;text-align:center;border-bottom:1px solid #f0d3a8}
+.demo-banner button{font:inherit;font-size:12px;margin-left:8px;border:1px solid #d9a85f;background:#fff;color:#7a4300;border-radius:6px;padding:1px 8px;cursor:pointer}
+.topbar{background:var(--brand);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{font-weight:800;letter-spacing:.5px;font-size:18px;color:#fff}.logo span{color:var(--accent)}
+.topbar .who{margin-left:auto;font-size:13px;opacity:.9;display:flex;gap:12px;align-items:center}
+.topbar button{background:transparent;border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:6px;padding:4px 10px;cursor:pointer;font:inherit}
+.page{max-width:1180px;margin:0 auto;padding:20px 16px 48px}
+.head{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px;margin-bottom:16px}
+.head .grow{flex:1 1 280px}
+.crumbs{font-size:13px;color:var(--muted);margin-bottom:4px}.crumbs a{color:var(--muted)}
+.grid{display:grid;gap:16px}.cols-2{grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr))}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;min-width:0}
+.card h2{margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.pill{white-space:nowrap;display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:1px 8px;background:var(--line);color:var(--ink)}
+.pill.bad{background:var(--bad-bg);color:var(--bad)}.pill.warn{background:var(--warn-bg);color:#9a5200}.pill.good{background:#e6f4ed;color:var(--good)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.kpi .label{font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+.kpi .value{font-size:30px;font-weight:700;margin-top:2px}.kpi .sub{font-size:13px;color:var(--muted)}
+.kpi.bad .value{color:var(--bad)}.kpi.warn .value{color:#b86200}
+.tablewrap{overflow-x:auto;margin:0 -16px;padding:0 16px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.barcell{width:32%;min-width:120px}.bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}.bar>div{height:100%;background:var(--bar)}
+.empty{color:var(--muted);padding:12px 0;font-size:14px}.list{max-height:420px;overflow:auto}
+form.inline{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+input,select,textarea{font:inherit;color:var(--ink);background:#fff;border:1px solid #c9d0d8;border-radius:8px;padding:8px 10px}
+textarea{width:100%;min-height:70px}
+.btn{font:inherit;font-weight:600;cursor:pointer;border-radius:8px;padding:8px 14px;border:1px solid var(--brand);background:var(--brand);color:#fff;display:inline-block;text-align:center}
+.btn:hover{text-decoration:none}.btn.ghost{background:#fff;color:var(--brand)}.btn.small{padding:3px 9px;font-size:13px;font-weight:500;white-space:nowrap}
+.btn.big{width:100%;padding:14px;font-size:17px;display:block}.btn.danger{background:var(--bad);border-color:var(--bad)}.btn.good{background:var(--good);border-color:var(--good)}
+label.field{display:block;margin-bottom:14px;font-weight:600;font-size:14px}
+label.field input,label.field textarea,label.field select{display:block;width:100%;margin-top:6px;font-weight:400}
+.err{background:var(--bad-bg);color:var(--bad);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:14px}
+.note{background:#e6f4ed;color:var(--good);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:14px}
+.chart svg{width:100%;height:auto;display:block}.chart .axis{font-size:10px;fill:var(--muted)}
+.narrow{max-width:520px;margin:0 auto;padding:24px 16px 48px}
+.choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 16px}
+.choice input{position:absolute;opacity:0;pointer-events:none}
+.choice label{display:block;text-align:center;border:2px solid var(--line);border-radius:10px;padding:14px 8px;background:#fff;cursor:pointer;font-weight:600}
+.choice input:checked+label{border-color:var(--brand);background:#eaf1f9}
+.choice input.unwell:checked+label{border-color:var(--bad);background:var(--bad-bg);color:var(--bad)}
+.choice input.well:checked+label{border-color:var(--good);background:#e6f4ed;color:var(--good)}
+.big-status{text-align:center;padding:24px 8px}.big-status h2{justify-content:center;margin-bottom:6px}.big-status .icon{font-size:44px}
+.consent{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:flex-start;margin-bottom:16px}.consent input{margin-top:3px}
+.phone{max-width:390px;margin:16px auto;border:10px solid #16202c;border-radius:36px;background:var(--bg);padding:16px;min-height:540px}
+.chip{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:2px 10px;margin:2px;cursor:pointer;background:#fff;font:inherit;font-size:13px}
+.actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.pv{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0;background:#fff;font-size:13px}
+.pv .who{font-weight:700;margin-bottom:4px}.pv .ch{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-bottom:6px}
+.pv.tg{background:#eaf3fb;border-color:#c5dcf0}.pv.wa{background:#e3f6dc;border-color:#bfe3b3}
+.pv.email .hdr{color:var(--muted);border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:8px}
+.sideinfo{max-width:430px;margin:0 auto;padding:0 16px 40px}
+.threecol{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+@media (max-width:480px){.phone{border:0;border-radius:0;margin:0;padding:12px;min-height:0}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function () {
+'use strict';
+
+/* ================= helpers ================= */
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = (n) => String(n).padStart(2, '0');
+const hhmm = (m) => pad(Math.floor(m / 60)) + ':' + pad(m % 60);
+const dayNum = (s) => { const [y, m, d] = s.split('-').map(Number); return Math.floor(Date.UTC(y, m - 1, d) / 864e5); };
+const dateStr = (dn) => { const d = new Date(dn * 864e5); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()); };
+const todayStr = () => { const n = new Date(); return n.getFullYear() + '-' + pad(n.getMonth() + 1) + '-' + pad(n.getDate()); };
+const prettyDate = (dn) => new Date(dn * 864e5).toLocaleDateString('en-SG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const pct = (a, b) => (b > 0 ? ((a / b) * 100).toFixed(1) + '%' : '–');
+const nowMin = () => { const n = new Date(); return n.getHours() * 60 + n.getMinutes(); };
+const stamp = (iso) => { const d = new Date(iso); return pad(d.getDate()) + ' ' + d.toLocaleString('en-GB', { month: 'short' }) + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+
+// Deterministic hash -> [0,1). Same inputs always give the same fictional world.
+function hrand(a, b, c) {
+  let h = 2166136261 ^ a;
+  h = Math.imul(h ^ b, 16777619);
+  h = Math.imul(h ^ c, 16777619);
+  h ^= h >>> 15; h = Math.imul(h, 2246822519);
+  h ^= h >>> 13; h = Math.imul(h, 3266489917);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+}
+
+/* ================= fictional world (mirrors db/seed.sql) ================= */
+const GROUPS = [{ code: 'JL', name: 'Jade Line' }, { code: 'CR', name: 'Coral Ring' }];
+const CONTRACTS = [
+  { id: 1, code: 'JL111', group: 'JL', name: 'JL Station A & Tunnels', main: 'Meridian Civil Pte Ltd', addr: '12 Woodlands Ave 9' },
+  { id: 2, code: 'JL112', group: 'JL', name: 'JL Station B', main: 'Tanjong Builders Pte Ltd', addr: '40 Bukit Batok Rd' },
+  { id: 3, code: 'JL113', group: 'JL', name: 'JL Depot', main: 'Harbourstone Engineering', addr: '5 Tuas South Link' },
+  { id: 4, code: 'CR111', group: 'CR', name: 'CR Viaduct North', main: 'Kestrel Infrastructure', addr: '88 Yio Chu Kang Rd' },
+  { id: 5, code: 'CR112', group: 'CR', name: 'CR Interchange Station', main: 'Meridian Civil Pte Ltd', addr: '2 Loyang Way' },
+  { id: 6, code: 'CR113', group: 'CR', name: 'CR Tunnels East', main: 'Orchid Bay Construction', addr: '17 Pasir Ris Dr 1' },
+].map((c) => Object.assign(c, { token: c.code.toLowerCase() + '-demo' }));
+const POOL = [['Apex Rebar Works', 'Rebar'], ['Lion Formwork', 'Formwork'], ['Everbright M&E', 'M&E'], ['Sunrise Scaffolding', 'Scaffolding'],
+  ['Delta Concreting', 'Concrete'], ['Bluewater Piling', 'Piling'], ['Northstar Waterproofing', 'Waterproofing'], ['Granite Excavation', 'Earthworks']];
+const FIRST = ['Rahman', 'Kumar', 'Wei', 'Aung', 'Hossain', 'Ravi', 'Ming', 'Thura', 'Islam', 'Suresh', 'Jun', 'Kyaw', 'Alam', 'Murugan', 'Hao', 'Zaw', 'Karim', 'Siva', 'Lei', 'Min'];
+const LAST = ['Md', 'Abdul', 'Raj', 'Chen', 'Tan', 'Lin', 'Ali', 'Nair', 'Htet', 'Uddin', 'Pillai', 'Zhang', 'Win', 'Miah', 'Das'];
+const REMARKS = ['Fever', 'Headache and dizziness', 'Sore throat', 'Stomach pain', 'Back pain', 'Feeling weak'];
+const PIN = '1234';
+
+const SUBCONS = [], WORKERS = [], byContract = {}, subsOf = {}, groupContracts = {};
+CONTRACTS.forEach((c) => {
+  byContract[c.id] = []; subsOf[c.id] = [];
+  (groupContracts[c.group] = groupContracts[c.group] || []).push(c);
+  const n = 3 + (c.id % 3);
+  const order = POOL.map((p, i) => ({ p, k: hrand(c.id, i, 10) })).sort((a, b) => a.k - b.k).slice(0, n);
+  let rn = 0;
+  order.forEach((o) => {
+    const s = { id: SUBCONS.length + 1, cid: c.id, name: o.p[0], trade: o.p[1], workers: [] };
+    SUBCONS.push(s); subsOf[c.id].push(s);
+    const count = 50 + Math.floor(hrand(s.id, 0, 11) * 60);
+    for (let i = 0; i < count; i++) {
+      rn++;
+      const w = {
+        id: WORKERS.length + 1, cid: c.id, sid: s.id, trade: s.trade,
+        last4: String((rn * 7) % 1000).padStart(3, '0') + String.fromCharCode(65 + ((rn * 11) % 26)),
+        name: FIRST[(rn * 7 + c.id) % 20] + ' ' + LAST[(rn * 13 + c.id * 3) % 15],
+      };
+      WORKERS.push(w); byContract[c.id].push(w); s.workers.push(w);
+    }
+  });
+});
+const subById = (id) => SUBCONS[id - 1];
+const contractByCode = (code) => CONTRACTS.find((c) => c.code === code);
+const contractByToken = (t) => CONTRACTS.find((c) => c.token === t);
+const RECIPIENTS = (c) => [
+  { ch: 'email', name: 'Safety Officer — Tan', to: 'safety.' + c.code.toLowerCase() + '@example.com' },
+  { ch: 'telegram', name: 'Safety Officer — Tan', to: 'Telegram chat 100000001' },
+  { ch: 'whatsapp', name: 'Site Manager — Lim', to: '+65 9000 0001' },
+];
+const CH_LABEL = { email: 'Email', telegram: 'Telegram', whatsapp: 'WhatsApp' };
+const FAKE_LINK = 'https://dtbm.example/site';
+
+/* ================= what a worker did on a day ================= */
+let todayDn = dayNum(todayStr());
+
+function baseRec(w, dn) {
+  const wd = new Date(dn * 864e5).getUTCDay();
+  if (!(hrand(w.id, dn, 1) < (wd === 0 ? 0.35 : 0.85))) return null;
+  const type = hrand(w.id, dn, 2) < 0.9 ? 'start' : 'mid';
+  const inMin = (type === 'start' ? 420 : 690) + Math.floor(hrand(w.id, dn, 3) * 90);
+  let outMin = null;
+  if (dn === todayDn) { if (hrand(w.id, dn, 4) < 0.25) outMin = Math.min(1439, inMin + 180 + Math.floor(hrand(w.id, dn, 5) * 120)); }
+  else if (hrand(w.id, dn, 4) >= 0.01) outMin = 1050 + Math.floor(hrand(w.id, dn, 5) * 90);
+  const unwell = hrand(w.id, dn, 6) < 0.02;
+  return { type, inMin, outMin, health: unwell ? 'unwell' : 'well', remarks: unwell ? REMARKS[Math.floor(hrand(w.id, dn, 7) * REMARKS.length)] : null };
+}
+
+/* ================= saved changes (this browser only) ================= */
+const KEY = 'dtbm-demo-v1';
+let store = null, storageOk = true;
+const blank = () => ({ att: {}, follow: {}, alerts: [], audit: [], consent: {}, attempts: {}, nextAlert: 1 });
+function loadStore() {
+  try { const s = localStorage.getItem(KEY); store = Object.assign(blank(), s ? JSON.parse(s) : {}); }
+  catch (e) { storageOk = false; if (!store) store = blank(); }
+}
+function saveStore() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) { storageOk = false; } }
+
+let session = null, claim = null, flash = null, lastAudit = '';
+const SS = (k, v) => { try { if (v === undefined) return JSON.parse(sessionStorage.getItem(k) || 'null'); if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* in-memory only */ } return null; };
+
+const getRec = (w, dn) => store.att[w.id + '|' + dn] || baseRec(w, dn);
+const isFollowed = (w, dn, r) => { const k = w.id + '|' + dn; return k in store.follow ? store.follow[k] : (r.health === 'unwell' && dn < todayDn); };
+function dayRecs(cid, dn) { const out = []; for (const w of byContract[cid]) { const r = getRec(w, dn); if (r) out.push({ w, r }); } return out; }
+function sum(list) {
+  const s = { total: list.length, start: 0, mid: 0, still: 0, unwell: 0 };
+  for (const { r } of list) { if (r.type === 'start') s.start++; else s.mid++; if (r.outMin == null) s.still++; if (r.health === 'unwell') s.unwell++; }
+  return s;
+}
+function trend(cids, dn) {
+  const pts = [];
+  for (let d = dn - 13; d <= dn; d++) { let t = 0, u = 0; for (const cid of cids) for (const { r } of dayRecs(cid, d)) { t++; if (r.health === 'unwell') u++; } pts.push({ d, t, u }); }
+  return pts;
+}
+
+/* ================= alerts (simulated) ================= */
+function addAlerts(c, key, body, test, onlyCh) {
+  const at = new Date().toISOString();
+  const made = RECIPIENTS(c).filter((r) => !onlyCh || r.ch === onlyCh).map((r) => ({ id: store.nextAlert++, cid: c.id, key, ch: r.ch, name: r.name, to: r.to, body, at, test: !!test }));
+  store.alerts.unshift(...made);
+  store.alerts = store.alerts.slice(0, 300);
+  return made;
+}
+function preview(a) {
+  const text = esc(a.body.replace(' Details: ' + FAKE_LINK, ''));
+  if (a.ch === 'email') return '<div class="pv email"><div class="ch">Email preview</div><div class="hdr"><b>dTBM Alerts</b> &lt;alerts@dtbm.example&gt;<br>To: ' + esc(a.to) +
+    '<br><b>Subject:</b> ' + esc(a.test ? 'dTBM ' + contractById(a.cid).code + ': test alert' : 'dTBM ' + contractById(a.cid).code + ': worker reported unwell') +
+    '</div><div>' + text + '</div><p style="margin:8px 0 0"><span class="btn small">Open dTBM</span> <span class="muted">' + esc(FAKE_LINK) + '</span></p></div>';
+  if (a.ch === 'telegram') return '<div class="pv tg"><div class="ch">Telegram preview</div><div class="who">dTBM Alerts bot</div><div>' + esc(a.body) + '</div></div>';
+  return '<div class="pv wa"><div class="ch">WhatsApp preview</div><div class="who">dTBM alert</div><div>dTBM alert: ' + esc(a.body) + '</div></div>';
+}
+const contractById = (id) => CONTRACTS[id - 1];
+
+/* ================= routing ================= */
+function parseHash() {
+  const h = location.hash.replace(/^#/, '') || '/';
+  const i = h.indexOf('?');
+  return { path: i < 0 ? h : h.slice(0, i), q: new URLSearchParams(i < 0 ? '' : h.slice(i + 1)) };
+}
+function dateParam(q) {
+  const v = q.get('date');
+  if (v && /^\d{4}-\d{2}-\d{2}$/.test(v)) { const d = dayNum(v); if (d <= todayDn && d >= todayDn - 29) return d; }
+  return todayDn;
+}
+const withDate = (path, dn) => '#' + path + '?date=' + dateStr(dn);
+const go = (hash) => { if (location.hash === hash) render(); else location.hash = hash; };
+const homeHash = () => (session ? (session.role === 'authority' ? '#/authority' : '#/site') : '#/');
+
+/* ================= building blocks ================= */
+function banner() {
+  return '<div class="demo-banner">DEMO · fictional data · stored in this browser only · not a secure system<button data-act="reset">Reset demo data</button>' +
+    (storageOk ? '' : '<br>Your browser is blocking storage, so changes last only until you close this tab.') + '</div>';
+}
+function topbar() {
+  if (!session) return '';
+  const c = session.role === 'contractor' ? contractById(session.cid) : null;
+  return '<header class="topbar"><a class="logo" href="' + homeHash() + '">d<span>TBM</span></a><span class="small" style="opacity:.8">' +
+    (c ? 'Contractor · ' + c.code : 'Authority') + '</span><div class="who"><span>' + (c ? c.code.toLowerCase() : 'authority') + '@dtbm.demo</span>' +
+    '<button data-act="logout">Log out</button></div></header>';
+}
+function datePicker(dn) {
+  return '<form class="inline noprint" data-form="goto-date"><input type="date" name="date" id="datepick" value="' + dateStr(dn) + '" min="' + dateStr(todayDn - 29) + '" max="' + dateStr(todayDn) + '" aria-label="Date"><button class="btn ghost" type="submit">View</button></form>';
+}
+const kpi = (label, value, sub, tone) => '<div class="kpi ' + (tone || '') + '"><div class="label">' + label + '</div><div class="value tnum">' + value + '</div>' + (sub ? '<div class="sub">' + sub + '</div>' : '') + '</div>';
+const barHtml = (v, max) => '<div class="bar"><div style="width:' + (max > 0 ? Math.round((v / max) * 100) : 0) + '%"></div></div>';
+
+function trendSvg(points) {
+  const W = 560, H = 160, padL = 22, max = Math.max(1, ...points.map((p) => p.t)), bw = (W - padL) / points.length;
+  let g = '';
+  points.forEach((p, i) => {
+    const h = (p.t / max) * (H - 16), uh = (p.u / max) * (H - 16), x = padL + i * bw + 3;
+    g += '<g><title>' + dateStr(p.d) + ': ' + p.t + ' workers, ' + p.u + ' unwell</title><rect x="' + x + '" y="' + (H - h) + '" width="' + (bw - 6) + '" height="' + h + '" rx="3" fill="var(--bar)" opacity=".85"/>' +
+      (p.u > 0 ? '<rect x="' + x + '" y="' + (H - Math.max(uh, 2)) + '" width="' + (bw - 6) + '" height="' + Math.max(uh, 2) + '" fill="var(--bad)"/>' : '') +
+      '<text x="' + (x + (bw - 6) / 2) + '" y="' + (H + 13) + '" text-anchor="middle" class="axis">' + dateStr(p.d).slice(8) + '</text></g>';
+  });
+  return '<div class="chart"><svg viewBox="0 0 ' + W + ' ' + (H + 18) + '" role="img" aria-label="Headcount over the last 14 days">' + g +
+    '<text x="0" y="10" class="axis">' + max + '</text><line x1="' + padL + '" x2="' + W + '" y1="' + H + '" y2="' + H + '" stroke="var(--line)"/></svg>' +
+    '<div class="small muted"><span style="color:var(--bar)">■</span> workers checked in &nbsp;<span style="color:var(--bad)">■</span> unwell</div></div>';
+}
+
+/* One site's day: shared by the contractor page and the authority drill-down. */
+function siteView(c, dn, editable) {
+  const recs = dayRecs(c.id, dn), t = sum(recs), isToday = dn === todayDn;
+  const roster = byContract[c.id].length;
+  const rows = subsOf[c.id].map((s) => ({ s, ...sum(recs.filter((x) => x.w.sid === s.id)) })).sort((a, b) => b.total - a.total || a.s.name.localeCompare(b.s.name));
+  const max = Math.max(1, ...rows.map((r) => r.total));
+  const unwell = recs.filter((x) => x.r.health === 'unwell').map((x) => ({ ...x, f: isFollowed(x.w, dn, x.r) })).sort((a, b) => a.f - b.f || a.r.inMin - b.r.inMin);
+  const open = unwell.filter((u) => !u.f).length;
+  const stuck = recs.filter((x) => x.r.outMin == null).sort((a, b) => subById(a.w.sid).name.localeCompare(subById(b.w.sid).name) || a.w.name.localeCompare(b.w.name));
+
+  let h = '<div class="kpis">' +
+    kpi('Checked in', t.total, t.start + ' start · ' + t.mid + ' mid · ' + pct(t.total, roster) + ' of roster') +
+    kpi(isToday ? 'Still on site' : 'Not checked out', t.still, (t.total - t.still) + ' checked out', !isToday && t.still > 0 ? 'warn' : '') +
+    kpi('Unwell', t.unwell, pct(t.unwell, t.total) + ' of workers' + (open ? ' · ' + open + ' open' : ''), t.unwell > 0 ? 'bad' : '') +
+    kpi('Subcontractors', rows.filter((r) => r.total > 0).length, 'of ' + rows.length + ' on roster') + '</div><div class="grid cols-2">';
+
+  h += '<section class="card"><h2>Manpower by subcontractor</h2><div class="tablewrap"><table><thead><tr><th>Subcontractor</th><th class="barcell"></th><th class="num">In</th><th class="num">Start</th><th class="num">Mid</th><th class="num">On site</th><th class="num">Unwell</th></tr></thead><tbody>';
+  rows.forEach((r) => { h += '<tr><td>' + esc(r.s.name) + '<div class="small muted">' + esc(r.s.trade) + ' · roster ' + r.s.workers.length + '</div></td><td class="barcell">' + barHtml(r.total, max) +
+    '</td><td class="num"><b>' + r.total + '</b></td><td class="num">' + r.start + '</td><td class="num">' + r.mid + '</td><td class="num">' + r.still + '</td><td class="num">' + (r.unwell ? '<span class="pill bad">' + r.unwell + '</span>' : 0) + '</td></tr>'; });
+  h += '<tr><td><b>Total</b></td><td></td><td class="num"><b>' + t.total + '</b></td><td class="num">' + t.start + '</td><td class="num">' + t.mid + '</td><td class="num">' + t.still + '</td><td class="num"><b>' + t.unwell + '</b></td></tr></tbody></table></div></section>';
+
+  h += '<section class="card"><h2>Last 14 days</h2>' + trendSvg(trend([c.id], dn)) + '</section>';
+
+  h += '<section class="card"><h2>Unwell workers <span class="pill bad">' + unwell.length + '</span></h2>';
+  if (!unwell.length) h += '<p class="empty">Nobody reported unwell.</p>';
+  else {
+    h += '<div class="tablewrap list"><table><thead><tr><th>Worker</th><th>Subcontractor</th><th>In</th><th>Remarks</th><th>Alert</th><th>Follow-up</th></tr></thead><tbody>';
+    unwell.forEach((u) => {
+      const key = u.w.id + '|' + dn;
+      h += '<tr><td>' + esc(u.w.name) + '<div class="small muted">…' + u.w.last4 + ' · ' + esc(u.w.trade) + '</div></td><td>' + esc(subById(u.w.sid).name) + '</td><td class="tnum">' + hhmm(u.r.inMin) +
+        '</td><td>' + (u.r.remarks ? esc(u.r.remarks) : '<span class="muted">–</span>') + '</td><td><span class="pill" title="Demo mode: message recorded, not sent">Demo 3</span></td><td>' +
+        (editable ? '<button class="btn small ' + (u.f ? 'ghost' : '') + '" data-act="follow" data-key="' + key + '">' + (u.f ? '✓ Done' : 'Mark done') + '</button>'
+                  : (u.f ? '<span class="pill good">Done</span>' : '<span class="pill warn">Open</span>')) + '</td></tr>';
+    });
+    h += '</tbody></table></div>';
+  }
+  h += '</section>';
+
+  h += '<section class="card"><h2>' + (isToday ? 'Not yet exited' : 'Never checked out') + ' <span class="pill ' + (stuck.length && !isToday ? 'warn' : '') + '">' + stuck.length + '</span></h2>';
+  if (!stuck.length) h += '<p class="empty">Everyone has checked out.</p>';
+  else {
+    h += '<div class="tablewrap list"><table><thead><tr><th>Worker</th><th>Subcontractor</th><th>Type</th><th>In</th></tr></thead><tbody>';
+    stuck.forEach((x) => { h += '<tr><td>' + esc(x.w.name) + '<div class="small muted">…' + x.w.last4 + '</div></td><td>' + esc(subById(x.w.sid).name) + '</td><td>' + (x.r.type === 'mid' ? '<span class="pill">Mid</span>' : 'Start') + '</td><td class="tnum">' + hhmm(x.r.inMin) + '</td></tr>'; });
+    h += '</tbody></table></div>';
+  }
+  return h + '</section></div>';
+}
+
+/* ================= pages ================= */
+function loginPage() {
+  const opts = CONTRACTS.map((c) => '<option value="' + c.code + '">' + c.code + ' — ' + esc(c.name) + '</option>').join('');
+  return '<main class="narrow"><div style="text-align:center;margin:12px 0 20px"><div class="logo" style="color:var(--brand);font-size:32px">d<span>TBM</span></div><p class="muted" style="margin:6px 0 0">Site manpower &amp; worker wellness — interactive demo</p></div>' +
+    '<div class="card" style="margin-bottom:14px"><h2>Authority</h2><p class="muted small" style="margin-top:0">Sees every group and every site: JL and CR, down to each contract and the named unwell workers.</p><button class="btn big" data-act="login-authority">Enter as authority</button></div>' +
+    '<div class="card" style="margin-bottom:14px"><h2>Main contractor</h2><p class="muted small" style="margin-top:0">Sees one site only.</p><label class="field">Contract<select id="cpick">' + opts + '</select></label><button class="btn big" data-act="login-contractor">Enter as contractor</button></div>' +
+    '<div class="card" style="margin-bottom:14px"><h2>Worker phone</h2><p class="muted small" style="margin-top:0">What a worker sees after scanning the site QR code. No login.</p><label class="field">Site<select id="wpick">' + opts + '</select></label>' +
+    '<button class="btn big ghost" data-act="open-worker">Open worker check-in</button><p class="small muted" style="margin-bottom:0">Tip: open it in a <a data-act="open-worker-tab">new tab</a>, then watch the contractor dashboard change in this tab.</p></div>' +
+    '<div class="card small muted"><b>Read this first.</b> Everything here is made up, and runs inside this web page. Logins are pretend and the site separation is not real security. The real dTBM app keeps contractors apart in the database itself.</div></main>';
+}
+
+function head(crumbs, title, sub, right) {
+  return '<div class="head"><div class="grow"><div class="crumbs">' + crumbs + '</div><h1>' + title + '</h1><div class="muted small">' + sub + '</div></div>' + (right || '') + '</div>';
+}
+
+function sitePage(q) {
+  const c = contractById(session.cid), dn = dateParam(q);
+  return topbar() + '<main class="page">' + head(esc(GROUPS.find((g) => g.code === c.group).name) + ' · ' + esc(c.main), esc(c.code) + ' — ' + esc(c.name), esc(prettyDate(dn)) + ' · ' + esc(c.addr),
+    '<a class="btn ghost noprint" href="#/site/settings">Alert settings</a><a class="btn ghost noprint" href="#/checkin/' + c.token + '" data-act="open-worker-tab" data-token="' + c.token + '">Worker check-in</a>' + datePicker(dn)) + siteView(c, dn, true) + '</main>';
+}
+
+function settingsPage() {
+  const c = contractById(session.cid);
+  const log = store.alerts.filter((a) => a.cid === c.id).slice(0, 50);
+  let h = topbar() + '<main class="page">' + head('<a href="#/site">' + c.code + ' dashboard</a> › Alert settings', 'Unwell alerts',
+    'When a worker checks in as unwell, every recipient below is notified with the worker’s name, NRIC/FIN last 4, subcontractor and a link. Remarks stay in dTBM.');
+  if (flash) { h += '<div class="note">' + esc(flash) + '</div>'; flash = null; }
+  h += '<div class="kpis">' + ['email', 'telegram', 'whatsapp'].map((ch) => '<div class="kpi"><div class="label">' + CH_LABEL[ch] + '</div><div style="margin-top:6px"><span class="pill">Demo mode</span></div><div class="sub">Messages are logged, not sent</div></div>').join('') + '</div>';
+  h += '<section class="card"><h2>Recipients <span class="pill">' + RECIPIENTS(c).length + ' active</span></h2><div class="tablewrap"><table><thead><tr><th>Name</th><th>Channel</th><th>Address</th><th></th></tr></thead><tbody>';
+  RECIPIENTS(c).forEach((r) => { h += '<tr><td>' + esc(r.name) + '</td><td>' + CH_LABEL[r.ch] + '</td><td class="small">' + esc(r.to) + '</td><td><div class="actions"><button class="btn small" data-act="alert-test" data-ch="' + r.ch + '">Send test</button></div></td></tr>'; });
+  h += '</tbody></table></div><p class="small muted" style="margin-bottom:0">The real app lets you add, pause and remove recipients, and link a Telegram chat with one tap.</p></section>';
+  h += '<section class="card" style="margin-top:16px"><h2>Alert log <span class="pill">last ' + log.length + '</span></h2>';
+  if (!log.length) h += '<p class="empty">No alerts yet. Send a test above, or check a worker in as unwell.</p>';
+  else {
+    h += '<div class="tablewrap list"><table><thead><tr><th>Time</th><th>Recipient</th><th>Channel</th><th>Status</th><th>Message</th></tr></thead><tbody>';
+    log.forEach((a) => { h += '<tr><td class="tnum" style="white-space:nowrap">' + stamp(a.at) + '</td><td>' + esc(a.name) + '<div class="small muted">' + esc(a.to) + '</div></td><td>' + CH_LABEL[a.ch] + (a.test ? '<div class="small muted">test</div>' : '') + '</td><td><span class="pill">demo</span></td><td class="small">' + esc(a.body) + '</td></tr>'; });
+    h += '</tbody></table></div>';
+  }
+  return h + '</section></main>';
+}
+
+function overviewPage(q) {
+  const dn = dateParam(q), all = CONTRACTS.map((c) => ({ c, s: sum(dayRecs(c.id, dn)) }));
+  const T = (k) => all.reduce((n, x) => n + x.s[k], 0), reporting = all.filter((x) => x.s.total > 0).length, silent = CONTRACTS.length - reporting;
+  const rows = GROUPS.map((g) => { const xs = all.filter((x) => x.c.group === g.code); return { g, total: xs.reduce((n, x) => n + x.s.total, 0), still: xs.reduce((n, x) => n + x.s.still, 0), unwell: xs.reduce((n, x) => n + x.s.unwell, 0), rep: xs.filter((x) => x.s.total > 0).length, n: xs.length }; });
+  const max = Math.max(1, ...rows.map((r) => r.total));
+  let h = topbar() + '<main class="page">' + head('All groups', 'Manpower overview', esc(prettyDate(dn)), datePicker(dn)) +
+    '<div class="kpis">' + kpi('Workers checked in', T('total'), 'across ' + CONTRACTS.length + ' sites') + kpi('Still on site', T('still'), '') +
+    kpi('Unwell', T('unwell'), pct(T('unwell'), T('total')) + ' of workers', T('unwell') ? 'bad' : '') +
+    kpi('Sites reporting', reporting + '/' + CONTRACTS.length, silent ? silent + ' with no check-ins' : 'all sites reporting', silent ? 'warn' : '') + '</div>' +
+    '<div class="grid cols-2"><section class="card"><h2>By group</h2><div class="tablewrap"><table><thead><tr><th>Group</th><th class="barcell"></th><th class="num">Workers</th><th class="num">On site</th><th class="num">Unwell</th><th class="num">Sites</th></tr></thead><tbody>';
+  rows.forEach((r) => { h += '<tr><td><a href="' + withDate('/authority/g/' + r.g.code, dn) + '"><b>' + r.g.code + '</b></a><div class="small muted">' + esc(r.g.name) + '</div></td><td class="barcell">' + barHtml(r.total, max) + '</td><td class="num"><b>' + r.total + '</b></td><td class="num">' + r.still + '</td><td class="num">' + (r.unwell ? '<span class="pill bad">' + r.unwell + '</span>' : 0) + '</td><td class="num">' + r.rep + '/' + r.n + '</td></tr>'; });
+  h += '</tbody></table></div></section><section class="card"><h2>Last 14 days — all sites</h2>' + trendSvg(trend(CONTRACTS.map((c) => c.id), dn)) + '</section></div></main>';
+  return h;
+}
+
+function groupPage(code, q) {
+  const g = GROUPS.find((x) => x.code === code);
+  if (!g) return topbar() + '<main class="page"><p>Group not found. <a href="#/authority">Back</a></p></main>';
+  const dn = dateParam(q), cs = groupContracts[code].map((c) => ({ c, s: sum(dayRecs(c.id, dn)) }));
+  const T = (k) => cs.reduce((n, x) => n + x.s[k], 0), max = Math.max(1, ...cs.map((x) => x.s.total));
+  let h = topbar() + '<main class="page">' + head('<a href="' + withDate('/authority', dn) + '">All groups</a> › ' + code, code + ' — ' + esc(g.name), esc(prettyDate(dn)), datePicker(dn)) +
+    '<div class="kpis">' + kpi('Workers checked in', T('total'), cs.length + ' contracts') + kpi('Still on site', T('still'), '') + kpi('Unwell', T('unwell'), pct(T('unwell'), T('total')) + ' of workers', T('unwell') ? 'bad' : '') + '</div>' +
+    '<div class="grid cols-2"><section class="card"><h2>By contract</h2><div class="tablewrap"><table><thead><tr><th>Contract</th><th class="barcell"></th><th class="num">In</th><th class="num">Start</th><th class="num">Mid</th><th class="num">On site</th><th class="num">Unwell</th></tr></thead><tbody>';
+  cs.forEach((x) => { h += '<tr><td><a href="' + withDate('/authority/c/' + x.c.code, dn) + '"><b>' + x.c.code + '</b></a><div class="small muted">' + esc(x.c.main) + ' · ' + subsOf[x.c.id].length + ' subcons</div></td><td class="barcell">' + barHtml(x.s.total, max) + '</td><td class="num"><b>' + x.s.total + '</b></td><td class="num">' + x.s.start + '</td><td class="num">' + x.s.mid + '</td><td class="num">' + x.s.still + '</td><td class="num">' + (x.s.unwell ? '<span class="pill bad">' + x.s.unwell + '</span>' : 0) + '</td></tr>'; });
+  return h + '</tbody></table></div></section><section class="card"><h2>Last 14 days — ' + code + '</h2>' + trendSvg(trend(groupContracts[code].map((c) => c.id), dn)) + '</section></div></main>';
+}
+
+function contractPage(code, q) {
+  const c = contractByCode(code);
+  if (!c) return topbar() + '<main class="page"><p>Contract not found. <a href="#/authority">Back</a></p></main>';
+  const dn = dateParam(q);
+  return topbar() + '<main class="page">' + head('<a href="' + withDate('/authority', dn) + '">All groups</a> › <a href="' + withDate('/authority/g/' + c.group, dn) + '">' + c.group + '</a> › ' + c.code,
+    c.code + ' — ' + esc(c.name), esc(c.main) + ' · ' + esc(c.addr) + ' · ' + esc(prettyDate(dn)), datePicker(dn)) + siteView(c, dn, false) +
+    '<p class="small muted" style="margin-top:16px">Your access to worker names on this page is logged. <a href="#/authority/audit">View audit log</a></p></main>';
+}
+
+function auditPage() {
+  let h = topbar() + '<main class="page">' + head('<a href="#/authority">All groups</a> › Audit log', 'Audit log', 'Every time the authority opened a page showing worker names (health data).');
+  if (!store.audit.length) h += '<p class="empty">Nothing yet. Open a contract page and come back.</p>';
+  else {
+    h += '<section class="card"><div class="tablewrap list"><table><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Contract</th></tr></thead><tbody>';
+    store.audit.slice(0, 100).forEach((a) => { h += '<tr><td class="tnum">' + stamp(a.at) + '</td><td>' + esc(a.user) + '</td><td>' + esc(a.action) + '</td><td>' + esc(a.code) + '</td></tr>'; });
+    h += '</tbody></table></div></section>';
+  }
+  return h + '</main>';
+}
+
+/* ---------- worker phone view ---------- */
+const WMSG = {
+  format: 'Enter the last 4 characters of your NRIC/FIN (e.g. 567A) and your 4-digit PIN.',
+  nomatch: 'We couldn’t find you on this site. Check your NRIC/FIN last 4 and PIN, or see your supervisor.',
+  expired: 'Your session timed out. Please enter your details again.',
+  missing: 'Please choose Start or Mid, and whether you are feeling well.',
+  consent: 'Please tick the consent box to continue.',
+  locked: 'Too many wrong PINs. Try again in 15 minutes, or ask your supervisor to reset your PIN.',
+};
+const needsConsent = (w) => w.id % 5 === 0 && !store.consent[w.id];
+
+function workerPage(token) {
+  const c = contractByToken(token);
+  if (!c) return banner() + '<main class="narrow"><div class="card">This check-in link is not valid. <a href="#/">Back to demo home</a></div></main>';
+  if (claim && (claim.until < Date.now() || claim.cid !== c.id)) { claim = null; SS('dtbm-demo-claim', null); }
+  const w = claim ? WORKERS[claim.wid - 1] : null;
+  let inner = '<div style="text-align:center;margin-bottom:14px"><div class="logo" style="color:var(--brand);font-size:24px">d<span>TBM</span></div><h1 style="margin-top:6px">' + c.code + '</h1><div class="muted">' + esc(c.name) + '</div></div><div class="card">';
+  if (flash) { inner += '<div class="err">' + esc(WMSG[flash] || flash) + '</div>'; flash = null; }
+  let extra = '';
+  if (!w) {
+    const fresh = byContract[c.id].filter((x) => !getRec(x, todayDn)).slice(0, 3);
+    inner += '<form data-form="identify"><label class="field">NRIC/FIN — last 4 characters<input name="last4" id="last4" placeholder="e.g. 567A" maxlength="4" autocapitalize="characters" autocomplete="off" style="font-size:20px;letter-spacing:4px;text-transform:uppercase"></label>' +
+      '<label class="field">PIN<input name="pin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" style="font-size:20px;letter-spacing:6px"></label><button class="btn big" type="submit">Continue</button></form>' +
+      '<p class="small muted" style="margin-bottom:0">Forgot your PIN? See your supervisor.</p></div>' +
+      '<div class="card small" style="margin-top:12px"><b>Demo help</b> — PIN for everyone is <b>1234</b>. Workers not yet checked in today:<br>' +
+      fresh.map((x) => '<button type="button" class="chip" data-act="fill" data-v="' + x.last4 + '">' + x.last4 + ' · ' + esc(x.name) + '</button>').join('') + '</div>';
+    return banner() + '<div class="phone">' + inner + '</div><div class="sideinfo small"><a href="#/">← Back to demo home</a></div>';
+  }
+  const r = getRec(w, todayDn);
+  inner += '<p style="margin-top:0"><b style="font-size:18px">' + esc(w.name) + '</b><br><span class="muted small">' + esc(subById(w.sid).name) + '</span></p>';
+  if (!r) {
+    inner += '<form data-form="checkin"><div class="small" style="font-weight:600">Check-in type</div><div class="choice"><input type="radio" id="t-start" name="type" value="start" checked><label for="t-start">Start of day</label><input type="radio" id="t-mid" name="type" value="mid"><label for="t-mid">Mid-day</label></div>' +
+      '<div class="small" style="font-weight:600">Are you feeling well today?</div><div class="choice"><input type="radio" id="h-well" class="well" name="health" value="well"><label for="h-well">👍 Yes, well</label><input type="radio" id="h-unwell" class="unwell" name="health" value="unwell"><label for="h-unwell">🤒 Not well</label></div>' +
+      '<label class="field">If not well, what’s wrong? <span class="muted">(optional)</span><textarea name="remarks" maxlength="300" placeholder="e.g. fever, headache"></textarea></label>' +
+      (needsConsent(w) ? '<label class="consent"><input type="checkbox" name="consent"><span>I agree that my name, NRIC/FIN last 4 and daily health status are collected to manage site safety, and shared with my main contractor and the site authority.</span></label>' : '') +
+      '<button class="btn big good" type="submit">Check in</button></form>';
+  } else if (r.outMin == null) {
+    inner += '<div class="big-status"><div class="icon">🦺</div><h2>Checked in at ' + hhmm(r.inMin) + '</h2><p class="muted">' + (r.type === 'mid' ? 'Mid-day' : 'Start of day') + ' check-in' + (r.health === 'unwell' ? ' · reported unwell — your safety officer has been notified' : '') + '</p></div>' +
+      '<button class="btn big danger" data-act="checkout">Check out — leaving site</button>';
+    if (r.health === 'unwell') extra = alertPanel(c, w);
+  } else {
+    inner += '<div class="big-status"><div class="icon">✅</div><h2>Checked out at ' + hhmm(r.outMin) + '</h2><p class="muted">In at ' + hhmm(r.inMin) + '. Have a safe trip home.</p></div>';
+    if (r.health === 'unwell') extra = alertPanel(c, w);
+  }
+  inner += '<button class="btn ghost big" style="margin-top:12px;font-size:15px;padding:10px" data-act="done">Done · Not me</button></div>';
+  return banner() + '<div class="phone">' + inner + '</div><div class="sideinfo small">' + extra + '<a href="#/">← Back to demo home</a></div>';
+}
+function alertPanel(c, w) {
+  const mine = store.alerts.filter((a) => a.key === w.id + '|' + todayDn && !a.test).sort((a, b) => a.id - b.id);
+  if (!mine.length) return '';
+  return '<div class="card" style="margin:0 0 12px"><h2>What the safety officer receives</h2><p class="small muted" style="margin-top:0">Simulated: in the real app these go out by email, Telegram and WhatsApp. Your remarks are never included.</p>' + mine.map(preview).join('') + '</div>';
+}
+
+/* ================= actions ================= */
+function setClaim(w) { claim = { wid: w.id, cid: w.cid, until: Date.now() + 10 * 60 * 1000 }; SS('dtbm-demo-claim', claim); }
+const formData = (form) => Object.fromEntries(new FormData(form).entries());
+
+function onSubmit(e) {
+  const form = e.target.closest('[data-form]'); if (!form) return;
+  e.preventDefault();
+  const kind = form.getAttribute('data-form'), f = formData(form), { path } = parseHash();
+  if (kind === 'goto-date') { const v = f.date || (document.getElementById('datepick') || {}).value; if (v) go(withDate(path, dayNum(v))); return; }
+  const c = path.startsWith('/checkin/') ? contractByToken(path.split('/')[2]) : null; if (!c) return;
+  if (kind === 'identify') {
+    const last4 = String(f.last4 || '').trim().toUpperCase(), pin = String(f.pin || '').trim();
+    if (!/^[0-9]{3}[A-Z]$/.test(last4) || !/^[0-9]{4}$/.test(pin)) { flash = 'format'; return render(); }
+    const k = c.id + '|' + last4, now = Date.now();
+    const recent = (store.attempts[k] || []).filter((t) => now - t < 15 * 60 * 1000);
+    if (recent.length >= 5) { store.attempts[k] = recent; saveStore(); flash = 'locked'; return render(); }
+    const w = byContract[c.id].find((x) => x.last4 === last4);
+    if (w && pin === PIN) { delete store.attempts[k]; saveStore(); setClaim(w); }
+    else { recent.push(now); store.attempts[k] = recent; saveStore(); flash = 'nomatch'; }
+    return render();
+  }
+  if (kind === 'checkin') {
+    if (!claim) { flash = 'expired'; return render(); }
+    const w = WORKERS[claim.wid - 1];
+    if ((f.type !== 'start' && f.type !== 'mid') || (f.health !== 'well' && f.health !== 'unwell')) { flash = 'missing'; return render(); }
+    if (needsConsent(w) && f.consent !== 'on') { flash = 'consent'; return render(); }
+    if (getRec(w, todayDn)) return render();
+    if (needsConsent(w)) store.consent[w.id] = true;
+    const unwell = f.health === 'unwell', m = nowMin();
+    store.att[w.id + '|' + todayDn] = { type: f.type, inMin: m, outMin: null, health: f.health, remarks: unwell ? String(f.remarks || '').trim().slice(0, 300) || null : null };
+    if (unwell) addAlerts(c, w.id + '|' + todayDn, 'dTBM ' + c.code + ': ' + w.name + ' (…' + w.last4 + ', ' + subById(w.sid).name + ') reported unwell at ' + hhmm(m) + '. Details: ' + FAKE_LINK, false);
+    saveStore(); return render();
+  }
+}
+
+function onClick(e) {
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const act = el.getAttribute('data-act');
+  if (act === 'login-authority') { session = { role: 'authority' }; SS('dtbm-demo-session', session); return go('#/authority'); }
+  if (act === 'login-contractor') { const c = contractByCode(document.getElementById('cpick').value); session = { role: 'contractor', cid: c.id }; SS('dtbm-demo-session', session); return go('#/site'); }
+  if (act === 'open-worker') { return go('#/checkin/' + contractByCode(document.getElementById('wpick').value).token); }
+  if (act === 'open-worker-tab') {
+    e.preventDefault();
+    const token = el.getAttribute('data-token') || contractByCode(document.getElementById('wpick').value).token;
+    window.open(location.href.split('#')[0] + '#/checkin/' + token, '_blank'); return;
+  }
+  if (act === 'logout') { session = null; SS('dtbm-demo-session', null); return go('#/'); }
+  if (act === 'reset') { store = blank(); try { localStorage.removeItem(KEY); } catch (er) { /* ignore */ } claim = null; SS('dtbm-demo-claim', null); lastAudit = ''; flash = null; return render(); }
+  if (act === 'fill') { const i = document.getElementById('last4'); if (i) { i.value = el.getAttribute('data-v'); const p = document.querySelector('input[name=pin]'); if (p) p.focus(); } return; }
+  if (act === 'follow' && session && session.role === 'contractor') {
+    const key = el.getAttribute('data-key'), wid = Number(key.split('|')[0]), dn = Number(key.split('|')[1]);
+    if (WORKERS[wid - 1].cid !== session.cid) return; // contractors can only touch their own site
+    const r = getRec(WORKERS[wid - 1], dn); store.follow[key] = !isFollowed(WORKERS[wid - 1], dn, r); saveStore(); return render();
+  }
+  if (act === 'alert-test' && session && session.role === 'contractor') {
+    const c = contractById(session.cid), ch = el.getAttribute('data-ch');
+    addAlerts(c, null, 'dTBM ' + c.code + ': test alert sent by ' + c.code.toLowerCase() + '@dtbm.demo. Unwell-worker alerts for this site will arrive here. Details: ' + FAKE_LINK, true, ch);
+    saveStore(); flash = 'Test alert recorded in the log below (demo mode: not actually sent).'; return render();
+  }
+  if (act === 'checkout' && claim) {
+    const w = WORKERS[claim.wid - 1], r = getRec(w, todayDn);
+    if (r && r.outMin == null) { store.att[w.id + '|' + todayDn] = Object.assign({}, r, { outMin: Math.min(1439, Math.max(nowMin(), r.inMin + 1)) }); saveStore(); }
+    return render();
+  }
+  if (act === 'done') { claim = null; SS('dtbm-demo-claim', null); return render(); }
+}
+
+/* ================= render ================= */
+function render() {
+  todayDn = dayNum(todayStr());
+  const { path, q } = parseHash();
+  const app = document.getElementById('app');
+  const redirect = (h) => { location.replace(h); };
+  if (path.startsWith('/checkin/')) { app.innerHTML = workerPage(path.split('/')[2]); return; }
+  if (!session) { app.innerHTML = banner() + loginPage(); return; }
+  const authority = session.role === 'authority';
+  if (path === '/' ) return redirect(homeHash());
+  if (path.startsWith('/authority') && !authority) return redirect('#/site');
+  if (path.startsWith('/site') && authority) return redirect('#/authority');
+  let page;
+  if (path === '/site') page = sitePage(q);
+  else if (path === '/site/settings') page = settingsPage();
+  else if (path === '/authority') page = overviewPage(q);
+  else if (path === '/authority/audit') page = auditPage();
+  else if (path.startsWith('/authority/g/')) page = groupPage(path.split('/')[3].toUpperCase(), q);
+  else if (path.startsWith('/authority/c/')) {
+    const code = path.split('/')[3].toUpperCase(), dn = dateParam(q), k = code + dn;
+    if (contractByCode(code) && k !== lastAudit) { lastAudit = k; store.audit.unshift({ at: new Date().toISOString(), user: 'authority@dtbm.demo', action: 'view_site_names:' + dateStr(dn), code }); store.audit = store.audit.slice(0, 200); saveStore(); }
+    page = contractPage(code, q);
+  } else return redirect(homeHash());
+  app.innerHTML = banner() + page;
+}
+
+/* ================= start ================= */
+try { localStorage.setItem(KEY + '-probe', '1'); localStorage.removeItem(KEY + '-probe'); } catch (e) { storageOk = false; }
+loadStore();
+session = SS('dtbm-demo-session'); claim = SS('dtbm-demo-claim');
+document.addEventListener('click', onClick);
+document.addEventListener('submit', onSubmit);
+window.addEventListener('hashchange', () => { flash = null; render(); });
+// Another tab of this browser changed the demo data (e.g. a worker checked in): refresh dashboards.
+window.addEventListener('storage', (e) => {
+  if (e.key !== KEY && e.key !== null) return;
+  loadStore();
+  if (!parseHash().path.startsWith('/checkin/')) render();
+});
+render();
+})();
+</script>
+</body>
+</html>
