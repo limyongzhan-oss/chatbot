@@ -22,17 +22,23 @@ See [`docs/dtbm-plan.md`](docs/dtbm-plan.md) for the full plan.
 
 ## Quick demo: no install
 
-Want to show dTBM without setting anything up? Open [`demo/dtbm-demo.html`](demo/dtbm-demo.html) by double-clicking it
-(Chrome or Edge recommended). It is one file: no server, no database, no internet.
+Want to show **Site manpower and worker health declaration** without setting anything up? Open
+[`demo/dtbm-demo.html`](demo/dtbm-demo.html) by double-clicking it (Chrome or Edge recommended). It is one file:
+no server, no database, no internet.
 
-- Pick **Authority**, a **Contractor** site, or the **Worker phone** view.
-- Open the worker view in a second tab and check a worker in as unwell. The contractor dashboard in the other tab updates
+- **Enter as LTA** sees every line (Jurong Region Line, Cross Island Line) and site, down to named workers.
+  Dummy log-in: `lta.officer` / `lta-demo-123`.
+- **Enter as contractor** sees one main contractor's site, with a Daily / Monthly switch. Dummy log-ins:
+  `jrl111` … `jrl113`, `crl111` … `crl113`, all with the password `contractor-demo` (listed on the log-in screen).
+- **Worker phone** is the check-in form: name, NRIC/FIN last 4, the site PIN, subcontractor, designation, health and
+  injury declaration, and (for supervisors) toolbox-meeting details. The contractor sets the day's site PIN on their dashboard.
+- Open the worker view in a second tab and submit a declaration. The contractor dashboard in the other tab updates
   by itself, and a simulated email, Telegram and WhatsApp alert appears.
-- Use **Reset demo data** in the top bar to start again.
+- **Reset demo data** in the top bar starts again.
 
-**It is a click-through demo, not the product.** The data is fictional and kept in your browser only, so a check-in on one
-device does not show up on another. The logins and the separation between sites are pretend, not security. The real
-app below keeps contractors apart in the database itself. Browser test: `node tests/demo.js`.
+**It is a click-through demo, not the product.** The data is fictional and kept in your browser only, so a check-in on
+one device does not show up on another. The log-ins and the separation between sites are pretend, not security. The
+real app below has not been changed to match this form yet. Browser test: `node tests/demo.js`.
 
 ## How data isolation works
 
